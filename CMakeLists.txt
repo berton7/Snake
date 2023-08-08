@@ -1,6 +1,6 @@
-project(SDL)
-
 cmake_minimum_required(VERSION 3.18)
+
+project(SDL)
 
 set(SOURCES
     Main.cpp
@@ -8,6 +8,6 @@ set(SOURCES
     Game.cpp
     Snake.cpp
     Edible.cpp)
-add_executable(game ${SOURCES})
-set_target_properties(game PROPERTIES CXX_STANDARD 17)
-target_link_libraries(game SDL2)
+add_executable(Snake ${SOURCES})
+set_target_properties(Snake PROPERTIES CXX_STANDARD 17)
+target_link_libraries(Snake SDL2)
