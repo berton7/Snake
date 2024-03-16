@@ -1,4 +1,6 @@
 #pragma once
+
+// #include <cstdint>
 #include <iostream>
 #include <string>
 #include <bitset>
@@ -6,7 +8,7 @@
 #define LOGGER_DEFAULT_OPTIONS 0x000E
 
 namespace logging {
-	typedef std::uint8_t LevelT;
+	typedef unsigned int LevelT;
 	namespace Level {
 		const LevelT Debug = 0;
 		const LevelT Info = 1;
@@ -15,7 +17,7 @@ namespace logging {
 		const LevelT Exception = 4;
 	};
 
-	typedef std::uint16_t OptionsType;
+	typedef unsigned int OptionsType;
 	enum Options : OptionsType {
 		NONE = 0,
 		ENABLE_COLOR = 1,

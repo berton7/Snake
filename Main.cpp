@@ -3,7 +3,7 @@
 int main()
 {
 	Game game;
-	game.init({400, 20});
+	game.init({400, 30});
 	game.setFrameRate(60);
 	while (game.isRunning())
 	{

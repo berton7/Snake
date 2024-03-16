@@ -3,7 +3,11 @@
 
 Game::Game(): mLogger("Game"), mSnake(4,4)
 {
+#if(DEBUG)
 	mLogger.setLevel(logging::Level::Debug);
+#else
+	mLogger.setLevel(logging::Level::Info);
+#endif
 	mLogger.setOption(logging::Options::ENABLE_COLOR, true);
 	setFrameRate(60);
 }
@@ -34,7 +38,7 @@ int Game::init(const GameSettings &settings)
 		mLogger.error("Failed to init SDL: ", SDL_GetError());
 		return rc;
 	}
-	mLogger.info("Successfully initialized SDL.", "");
+	mLogger.debug("Successfully initialized SDL.", "");
 	mSDLInitialized = true;
 
 	mWindow = SDL_CreateWindow("Snake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mData.winSize, mData.winSize, SDL_WINDOW_SHOWN);
@@ -50,8 +54,7 @@ int Game::init(const GameSettings &settings)
 		mLogger.error("Failed to initialize renderer: ", SDL_GetError());
 		return 2;
 	}
-
-	mLogger.debug("Game is starting");
+	mLogger.info("Game is starting");
 	resetGame();
 	mIsRunning = true;
 	return 0;
@@ -77,8 +80,22 @@ void Game::end()
 
 void Game::tick()
 {
-	handleEvents();
 	update();
+}
+
+void setNextDirection(Snake::Direction inputD, Snake::Direction &nextD, 
+						Snake::Direction &nextNextD, unsigned int &snakeDel)
+{
+	if (nextD == Snake::Direction::None)
+		nextD = inputD;
+	else {
+		if (nextNextD == inputD)
+		{
+			snakeDel = BASE_SNAKE_DELAY / SNAKE_SPEEDUP_FACTOR;
+		}
+		else
+			nextNextD = inputD;
+	}
 }
 
 void Game::handleEvents()
@@ -99,6 +116,12 @@ void Game::handleEvents()
 				scheduleQuit();
 				break;
 			}
+			if (event.key.keysym.sym == SDLK_UP ||
+				event.key.keysym.sym == SDLK_DOWN ||
+				event.key.keysym.sym == SDLK_LEFT ||
+				event.key.keysym.sym == SDLK_RIGHT) {
+				mSnakeDelay = BASE_SNAKE_DELAY;
+			}
 			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym)
@@ -107,17 +130,24 @@ void Game::handleEvents()
 				if (!mSnake.isAlive())
 					resetGame();
 				break;
+			case SDLK_SPACE:
+				mIsPaused = !mIsPaused;
+				break;
 			case SDLK_UP:
-				mNextDirection = Snake::Direction::Up;
+				setNextDirection(Snake::Direction::Up, mNextDirection, 
+								mNextNextDirection, mSnakeDelay);
 				break;
 			case SDLK_DOWN:
-				mNextDirection = Snake::Direction::Down;
+				setNextDirection(Snake::Direction::Down, mNextDirection, 
+								mNextNextDirection, mSnakeDelay);
 				break;
 			case SDLK_LEFT:
-				mNextDirection = Snake::Direction::Left;
+				setNextDirection(Snake::Direction::Left, mNextDirection, 
+								mNextNextDirection, mSnakeDelay);
 				break;
 			case SDLK_RIGHT:
-				mNextDirection = Snake::Direction::Right;
+				setNextDirection(Snake::Direction::Right, mNextDirection, 
+								mNextNextDirection, mSnakeDelay);
 				break;
 			}
 		case SDL_MOUSEBUTTONDOWN:
@@ -136,33 +166,44 @@ void Game::update()
 {
 	if (mSnake.isAlive())
 	{
-		mSnake.setDirection(mNextDirection);
-		mSnake.update(mEdible);
-		int winX, winY;
-		SDL_GetWindowSize(mWindow, &winX, &winY);
-		switch (mNextDirection)
+		if (mFrames - mFramesSnake >= mSnakeDelay)
 		{
-		case Snake::Direction::Up:
-			if (mSnake.getHeadY() < 0)
-				mSnake.kill();
-			break;
-		case Snake::Direction::Down:
-			if (mSnake.getHeadY() >= mData.nCellsX)
-				mSnake.kill();
-			break;
-		case Snake::Direction::Left:
-			if (mSnake.getHeadX() < 0)
-				mSnake.kill();
-			break;
-		case Snake::Direction::Right:
-			if (mSnake.getHeadX() >= mData.nCellsX)
-				mSnake.kill();
-			break;
+			mSnake.setDirection(mNextDirection);
+			mSnake.update(mEdible);
+			int winX, winY;
+			SDL_GetWindowSize(mWindow, &winX, &winY);
+			switch (mSnake.getCurrentDirection())
+			{
+			case Snake::Direction::Up:
+				if (mSnake.getHeadY() < 0)
+					mSnake.kill();
+				break;
+			case Snake::Direction::Down:
+				if (mSnake.getHeadY() > mData.nCellsX)
+					mSnake.kill();
+				break;
+			case Snake::Direction::Left:
+				if (mSnake.getHeadX() < 0)
+					mSnake.kill();
+				break;
+			case Snake::Direction::Right:
+				if (mSnake.getHeadX() > mData.nCellsX)
+					mSnake.kill();
+				break;
+			default:
+				break;
+			}
+			if (mSnake.hasEaten())
+				mEdible.move(mData.nCellsX, mData.nCellsX);
+
+			mFramesSnake = mFrames;
+			if (mNextNextDirection != Snake::Direction::None){
+				mNextDirection = mNextNextDirection;
+				mNextNextDirection = Snake::Direction::None;
+			}
+			else mNextDirection = Snake::Direction::None;
 		}
-		if (mSnake.hasEaten())
-			mEdible.move(mData.nCellsX, mData.nCellsX);
 	}
-	//else mLogger.info("dead");
 }
 
 void Game::render()
@@ -183,7 +224,8 @@ void Game::render()
 void Game::loop()
 {
 	const Uint64 begin = SDL_GetTicks64();
-	if (!(mFrames%6))
+	handleEvents();
+	if (!mIsPaused)
 	{
 		tick();
 	}

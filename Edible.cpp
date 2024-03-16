@@ -26,5 +26,5 @@ void Edible::draw(SDL_Renderer *renderer, int cellW, int cellH)
     r.w = cellW;
     r.h = cellH;
     SDL_RenderFillRect(renderer, &r);
-    SDL_RenderDrawRect(renderer, &r);
+    // SDL_RenderDrawRect(renderer, &r);
 }

@@ -7,23 +7,46 @@ Snake::Snake(int startX, int startY): mStartX(startX), mStartY(startY), mLogger(
 
 void Snake::setDirection(Direction d)
 {
-    switch(mDirection)
-    {
-    case Direction::Up:
-        if (d==Direction::Down) return;
-        break;
-    case Direction::Down:
-        if (d==Direction::Up) return;
-        break;
-    case Direction::Right:
-        if (d==Direction::Left) return;
-        break;
-    case Direction::Left:
-        if (d==Direction::Right) return;
-        break;
+    if (d != Direction::None && d != mDirection){
+        switch(mDirection)
+        {
+        case Direction::Up:
+            if (d==Direction::Down) {
+                mLogger.debug("thats not possible!");
+                return;
+            }
+            break;
+        case Direction::Down:
+            if (d==Direction::Up) {
+                mLogger.debug("thats not possible!");
+                return;
+            }
+            break;
+        case Direction::Right:
+            if (d==Direction::Left) {
+                mLogger.debug("thats not possible!");
+                return;
+            }
+            break;
+        case Direction::Left:
+            if (d==Direction::Right) {
+                mLogger.debug("thats not possible!");
+                return;
+            }
+            break;
+        default:
+            return;
+        }
+        mDirection = d;
     }
-    mDirection = d;
 }
+
+void Snake::kill()
+{
+    mLogger.info("I'M Dead!");
+    mIsAlive = false;
+    goBack();
+};
 
 void Snake::goBack()
 {
@@ -36,7 +59,6 @@ void Snake::update(const Edible &edible)
     mHasEaten = false;
     const auto &prevHead = mCells.back();
     prevLastCell = mCells.front();
-    if (prevHead.first == edible.getX() && prevHead.second == edible.getY()) mHasEaten = true;
     switch (mDirection)
     {
     case Direction::Up:
@@ -50,6 +72,8 @@ void Snake::update(const Edible &edible)
         break;
     case Direction::Left:
         mCells.emplace_back(std::make_pair(prevHead.first-1, prevHead.second));
+        break;
+    default:
         break;
     }
 
@@ -69,6 +93,7 @@ void Snake::update(const Edible &edible)
         }
     }
 
+    if (newHead.first == edible.getX() && newHead.second == edible.getY()) mHasEaten = true;
     if (!mHasEaten)
         mCells.pop_front();
 }
@@ -83,14 +108,17 @@ void Snake::draw(SDL_Renderer *renderer, int cellW, int cellH)
     {
         r.x = cell.first * cellW;
         r.y = cell.second * cellH;
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         SDL_RenderFillRect(renderer, &r);
-        SDL_RenderDrawRect(renderer, &r);
+        // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        // SDL_RenderDrawRect(renderer, &r);
     }
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     r.x = mCells.back().first * cellW;
     r.y = mCells.back().second * cellH;
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
     SDL_RenderFillRect(renderer, &r);
-    SDL_RenderDrawRect(renderer, &r);
+    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    // SDL_RenderDrawRect(renderer, &r);
 }
 
 void Snake::reset()

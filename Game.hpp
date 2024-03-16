@@ -1,8 +1,12 @@
 #pragma once
+
 #include <SDL2/SDL.h>
 #include "Logger.hpp"
 #include "Snake.hpp"
 #include <memory>
+
+#define BASE_SNAKE_DELAY 10
+#define SNAKE_SPEEDUP_FACTOR 3
 
 typedef struct
 {
@@ -31,11 +35,15 @@ private:
 	Uint64 mDeltaTime { 0 };
 	Uint64 mMaxLoopTimeForFPS { 0 };
 	int mFrames {0};
+	int mFramesSnake {0};
 
 	bool mIsRunning{ false };
+	bool mIsPaused {false};
 
+	unsigned int mSnakeDelay { BASE_SNAKE_DELAY };
 	GameData mData;
 	Snake::Direction mNextDirection {Snake::Direction::Right};
+	Snake::Direction mNextNextDirection {Snake::Direction::None};
 	Snake mSnake;
 	Edible mEdible;
 

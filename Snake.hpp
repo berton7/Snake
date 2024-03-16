@@ -11,7 +11,7 @@ class Snake
 public:
     enum class Direction
     {
-        Up, Down, Left, Right
+        None, Up, Down, Left, Right
     };
 
 private:
@@ -32,14 +32,10 @@ public:
     int getHeadY() const { return mCells.back().second; };
 
     void setDirection(Direction d);
+    Direction getCurrentDirection() { return mDirection; };
     bool hasEaten() { return mHasEaten; };
     bool isAlive() { return mIsAlive; };
-    void kill() 
-    {
-        mLogger.info("I'M Dead!");
-        mIsAlive = false;
-        goBack();
-    };
+    void kill();
     void goBack();
     void update(const Edible &edible);
     void draw(SDL_Renderer *renderer, int cellW, int cellH);
